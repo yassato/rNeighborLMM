@@ -1,0 +1,21 @@
+Package: rNeighborLMM
+Title: Fitting mixed models for oligogenic and polygenic indirect genetic effects
+Version: 0.0.0.9000
+Authors@R: c(person(given = "Yasuhiro", family = "Sato", email = "sato.yasuhiro.36c@kyoto-u.jp", role = c("aut", "cre"), comment = c(ORCID = "0000-0002-6466-723X")),person(given = "Kosuke", family = "Hamazaki", role = "aut"))
+Description: This package serves as a wrapper of RAINBOWR and rNeighborGWAS, which solves a multi-kernel mixed model incorporating direct and indirect genetic effects with their covariance. GWAS of oligogenic indirect genetic effects can be performed following the same way as rNeighborGWAS operates. See Sato & Hamazaki (2026) for theoretical details.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
+Maintainer: Yasuhiro Sato <sato.yasuhiro.36c@kyoto-u.jp>
+Suggests:
+    knitr,
+    rmarkdown,
+    testthat
+VignetteBuilder: knitr
+Imports:
+    gaston,
+    parallel,
+    Matrix,
+    stats,
+    RAINBOWR

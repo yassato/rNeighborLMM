@@ -1,0 +1,157 @@
+---
+title: "rNeighborLMM"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{rNeighborLMM}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Background
+<p>This package serves as a wrapper of RAINBOWR (Hamazaki & Iwata 2020) and rNeighborGWAS (Sato et al. 2021), which solves a multi-kernel mixed model incorporating direct and indirect genetic effects (DGEs and IGEs) with their covariance. Genome-wide association study (GWAS) of oligogenic indirect genetic effects can be performed following the same way as rNeighborGWAS operates. See Sato & Hamazaki (2026) for theoretical details.</p>
+
+## Usage
+
+### 1. Installation
+<p>First of all, let us load the rNeighborLMM package.</p>
+```{r message = FALSE, warning = FALSE, echo = TRUE}
+require(rNeighborLMM)
+```
+
+<p>Please install the rNeighborLMM package if not installed. Note that this package is not available at CRAN.</p>
+```{r message = FALSE, warning = FALSE, echo = TRUE, eval=FALSE}
+devtools::install_github("yassato/rNeighborLMM", repo="master") # if not installed
+install.packages("rNeighborGWAS") # if not installed
+```
+
+### 2. Input data
+
+<p>Secondly, let us see the example genotype data. In Neighbor GWAS, spatial positions in a 2D space are required for individual genotypes.</p>
+```{r message = FALSE, warning = FALSE, echo = TRUE}
+set.seed(1)
+
+# genotype values and marker info
+g <- matrix(sample(c(-1,1),100*1000,replace=TRUE), 100, 1000)
+gmap <- cbind(c(rep(1,ncol(g)/2), rep(2,ncol(g)/2)), c(c(1:(ncol(g)/2)),c(1:(ncol(g)/2))))
+
+# spatial positions
+x <- rep(c(1:10), 10)
+y <- rep(c(1:10), each=10)
+smap <- cbind(x, y)
+
+# covariate of experimental blocks (optional)
+grouping <- c(rep(1,nrow(g)/2), rep(2,nrow(g)/2))
+```
+
+<p>The utility `nei.coval` function makes it easier to calculate mean allelic similarity between focal and neighboring individuals. The following example assumes that interactions occur up to neighboring individuals within $\sqrt{2}$ Euclidean distance from focal individuals (i.e., `scale=sqrt(2)`) without any interactions between the former and latter half individuals (i.e., spatial separation indicated by `grouping=grouping`).</p>
+```{r message = FALSE, warning = FALSE, echo = TRUE}
+g_nei <- nei.coval(geno=g, smap=smap, 
+                   scale=sqrt(2), # assumed range of neighbor interactions
+                   grouping=grouping # spatial separation as defined grouping above
+                   )
+```
+
+<p>Note that genotype values must be encoded as (AA, aa) = (+1, -1) in Neighbor GWAS; otherwise, it stops. The following exemplifies an erroneous code.</p>
+```{r message = FALSE, warning = FALSE, echo = TRUE}
+# (AA, aa) = (+1, 0)
+g2 <- matrix(sample(c(0,1),100*1000,replace=TRUE), 100, 1000)
+
+# not work
+g_nei2 <- try(nei.coval(geno=g2, smap=smap, scale=sqrt(2),grouping=grouping))
+```
+
+<p>To see how it works, let us simulate a phenotype from the example genotype data. Here we use the `nei_simu` function of `rNeighborGWAS` package, which does not simulate covariance between IGE and DGE.</p>
+```{r message = FALSE, warning = FALSE, echo = TRUE}
+pheno <- rNeighborGWAS::nei_simu(geno=g, smap=smap, 
+                                 scale=sqrt(2), # true range of neighbor interactions
+                                 grouping=grouping, 
+                                 n_causal=5, # no. of causative SNPs
+                                 pveB=0.4, # true PVE by oligogenic effects
+                                 pve=0.7 # true PVE by polygenic effects
+                                 )
+```
+
+### 3. Solving multi-kernel mixed models
+
+<p>The `neiEM3.cov` function acts as a wrapper of `EM3.cpp` and `EM3.cov` functions of `RAINBOWR` package, which solves a multi-kernel mixed model of polygenic DGEs and IGEs with their covariance, as follows.</p>
+```{r message = FALSE, warning = FALSE, echo = TRUE}
+X0 <- model.matrix(~factor(grouping)) # grouping factor considered non-genetic covariates
+lmm.out <- neiEM3.cov(geno=g, g_nei=g_nei, pheno=pheno, X0=X0, forceApproxK=TRUE)
+```
+
+<p>For additional arguments and output, see the help page of `EM3.cov` function in `RAINBOWR` package. The `neiEM3.cov` function adds a likelihood ratio and $p$-value over a model without the DGE-IGE covariance. The following code yielded $p>0.05$ as the covariance was not simulated in the example phenotype above.</p>
+```{r message = FALSE, warning = FALSE, echo = TRUE}
+print(lmm.out$chi2)
+print(lmm.out$pval)
+```
+
+<p>The utility `calcPVE.cov` function makes it easy to calculate the proportion of phenotypic variation (PVE) explained by DGE, IGE, and their covariance. Note that PVE by the covariance can be negative, reducing total genetic variance to result in an antagonistic response of DGE and IGE to selection.</p>
+```{r message = FALSE, warning = FALSE, echo = TRUE}
+pve <- calcPVE.cov(lmm.out)
+print(pve)
+```
+
+### 4. Genome-wide association study (GWAS)
+
+<p>The main `neiGWAS.cov` function performs genome-wide association mapping of oligogenic IGEs that represent frequency-dependent selection on a phenotype (i.e., $\beta_2$ in Sato et al. 2023). For more flexible and efficient implementation, please see the vignette of Sato & Hamazaki (2026).</p>
+```{r message = FALSE, warning = FALSE, echo = TRUE}
+gwas.out <- neiGWAS.cov(geno=g, g_nei=g_nei, pheno=pheno, X0=X0, forceApproxK=TRUE)
+x <- data.frame(gmap, gwas.out$p2)
+colnames(x) = c("chr", "pos", "p")
+gaston::manhattan(x)
+```
+
+
+## Option
+
+### When kernels are not positive semidefinite
+<p>The option `forceApproxK=TRUE` can approximate a weighted kernel to the nearest positive definite matrix. This still produces an error message for alert but allows us to solve LMMs. As the default is `forceApproxK=FALSE`, try `forceApproxK=TRUE` if it fails.</p>
+```{r message = FALSE, warning = FALSE, echo = TRUE}
+# not work...
+lmm.out <- try(neiEM3.cov(geno=g, g_nei=g_nei, pheno=pheno, X0=X0))
+try(print(lmm.out$weights))
+
+# Error message remains but estimates are available
+lmm.out <- neiEM3.cov(geno=g, g_nei=g_nei, pheno=pheno, X0=X0, forceApproxK=TRUE)
+print(lmm.out$weights)
+```
+
+### User-defined function for distance decay
+<p>The option `dist.func` in the `nei.coval` function allows a user-defined function to weight neighbor effects by their Euclidean distance from focal individuals. This user-defined function must be given by f(x). The following example shows how to implement the squared distance decay $f(d) = (1/d^2)$ as suggested by Muir (2005).</p>
+```{r message = FALSE, warning = FALSE, echo = TRUE}
+dist.func = function(x) return((1/x^2))
+g_nei <- nei.coval(geno=g, smap=smap, scale=sqrt(2), dist.func=dist.func, grouping=grouping)
+```
+
+### Standard GWAS
+<p>In addition to IGEs, the main `neiGWAS.cov` function provides $p$-values for oligogenic DGEs $\beta_1$. These $p$-values are based on forward selection (not drop one variable from the full model) with likelihood ratio tests and accordingly correspond to those of standard GWAS (Sato et al. 2021).</p>
+```{r message = FALSE, warning = FALSE, echo = TRUE}
+x <- data.frame(gmap, gwas.out$p1)
+colnames(x) = c("chr", "pos", "p")
+gaston::manhattan(x)
+```
+
+### Asymmetric neighbor interactions
+<p>In addition to $\beta_1$ and $\beta_2$, the option `asym=TRUE` in `neiGWAS.cov` function allows us to test $\beta_{12}$ that incorporate asymmetric interactions between focal and neighbor genotypes (Sato et al. 2023). The output object includes additional $p$-values (`p12`) as follows. </p>
+```{r message = FALSE, warning = FALSE, echo = TRUE}
+gwas.out <- neiGWAS.cov(geno=g, g_nei=g_nei, pheno=pheno, X0=X0, asym=TRUE, forceApproxK=TRUE)
+x <- data.frame(gmap, gwas.out$p12)
+colnames(x) = c("chr", "pos", "p")
+gaston::manhattan(x)
+```
+
+
+## References
+- Hamazaki, K., & Iwata, H. (2020). RAINBOW: Haplotype-based genome-wide association study using a novel SNP-set method. PLOS Computational Biology, 16(2), e1007663. https://doi.org/10.1371/journal.pcbi.1007663  
+- Muir, W. M. (2005). Incorporation of competitive effects in forest tree or animal breeding programs. Genetics, 170(3), 1247–1259. https://doi.org/10.1534/genetics.104.035956  
+- Sato, Y., Yamamoto, E., Shimizu, K. K., & Nagano, A. J. (2021). Neighbor GWAS: Incorporating neighbor genotypic identity into genome-wide association studies of field herbivory. Heredity, 126(4), 597-614. https://doi.org/10.1038/s41437-020-00401-w  
+- Sato, Y., Takahashi, Y., Xu, C., & Shimizu, K. K. (2023). Detecting frequency-dependent selection through the effects of genotype similarity on fitness components. Evolution, 77(4), 1145-1157. https://doi.org/10.1093/evolut/qpad028  
+- Sato, Y. (2025). Negative frequency-dependent selection underlies overyielding through neighbor genotypic effects in _Arabidopsis thaliana_. bioRxiv. https://doi.org/10.1101/2025.05.14.654149  
+

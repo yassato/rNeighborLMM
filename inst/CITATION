@@ -1,0 +1,9 @@
+bibentry(
+  bibtype = "Manual",
+  title = "rNeighborLMM: Fitting mixed models for oligogenic and polygenic indirect
+genetic effects",
+    author = "Yasuhiro Sato and Kosuke Hamazaki",
+    year = 2026,
+    note = "R package version 0.0.0.9000",
+    url = "https://github.com/yassato/rNeighborLMM"
+)
