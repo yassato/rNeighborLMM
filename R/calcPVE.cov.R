@@ -4,7 +4,6 @@
 #' @param x A output of \code{neiEM3.cov()}.
 #' @return Proportion of phenotypic variation explained (PVE) by direct genetic effects (DGEs), indirect genetic effects (IGEs), and their covariance (cov).
 #' @author Yasuhiro Sato (\email{sato.yasuhiro.36c@kyoto-u.jp})
-#' @import RAINBOWR
 #' @export
 calcPVE.cov = function(x){
   if((is.list(x)==TRUE)&(length(x)==13)){

@@ -8,7 +8,7 @@ This R package serves as a wrapper of RAINBOWR (Hamazaki & Iwata 2020) and rNeig
 ## Installation
 Please install the rNeighborLMM package through GitHub. Note that this package is not available at CRAN.
 ```
-devtools::install_github("yassato/rNeighborLMM", repo="master")
+devtools::install_github("yassato/rNeighborLMM", repo="master", build_vignettes = TRUE)
 ```
 
 ## Usage

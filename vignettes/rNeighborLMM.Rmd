@@ -27,7 +27,7 @@ require(rNeighborLMM)
 
 <p>Please install the rNeighborLMM package if not installed. Note that this package is not available at CRAN.</p>
 ```{r message = FALSE, warning = FALSE, echo = TRUE, eval=FALSE}
-devtools::install_github("yassato/rNeighborLMM", repo="master") # if not installed
+devtools::install_github("yassato/rNeighborLMM", repo="master", build_vignettes=TRUE) # if not installed
 install.packages("rNeighborGWAS") # if not installed
 ```
 
@@ -103,9 +103,7 @@ print(pve)
 <p>The main `neiGWAS.cov` function performs genome-wide association mapping of oligogenic IGEs that represent frequency-dependent selection on a phenotype (i.e., $\beta_2$ in Sato et al. 2023). For more flexible and efficient implementation, please see the vignette of Sato & Hamazaki (2026).</p>
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 gwas.out <- neiGWAS.cov(geno=g, g_nei=g_nei, pheno=pheno, X0=X0, forceApproxK=TRUE)
-x <- data.frame(gmap, gwas.out$p2)
-colnames(x) = c("chr", "pos", "p")
-gaston::manhattan(x)
+ggMan(chr=gmap[,1], pos=gmap[,2], p=gwas.out$p2)
 ```
 
 
@@ -133,18 +131,14 @@ g_nei <- nei.coval(geno=g, smap=smap, scale=sqrt(2), dist.func=dist.func, groupi
 ### Standard GWAS
 <p>In addition to IGEs, the main `neiGWAS.cov` function provides $p$-values for oligogenic DGEs $\beta_1$. These $p$-values are based on forward selection (not drop one variable from the full model) with likelihood ratio tests and accordingly correspond to those of standard GWAS (Sato et al. 2021).</p>
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-x <- data.frame(gmap, gwas.out$p1)
-colnames(x) = c("chr", "pos", "p")
-gaston::manhattan(x)
+ggMan(chr=gmap[,1], pos=gmap[,2], p=gwas.out$p1)
 ```
 
 ### Asymmetric neighbor interactions
 <p>In addition to $\beta_1$ and $\beta_2$, the option `asym=TRUE` in `neiGWAS.cov` function allows us to test $\beta_{12}$ that incorporate asymmetric interactions between focal and neighbor genotypes (Sato et al. 2023). The output object includes additional $p$-values (`p12`) as follows. </p>
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 gwas.out <- neiGWAS.cov(geno=g, g_nei=g_nei, pheno=pheno, X0=X0, asym=TRUE, forceApproxK=TRUE)
-x <- data.frame(gmap, gwas.out$p12)
-colnames(x) = c("chr", "pos", "p")
-gaston::manhattan(x)
+ggMan(chr=gmap[,1], pos=gmap[,2], p=gwas.out$p12)
 ```
 
 

@@ -21,7 +21,7 @@
 #'  \item p2 p-value for neighbor effects by a likelihood ratio test models with or without symmetric neighbor effects.
 #' }
 #' @author Yasuhiro Sato (\email{sato.yasuhiro.36c@kyoto-u.jp}) and Kosuke Hamazaki
-#' @import Matrix gaston parallel RAINBOWR
+#' @import gaston parallel
 #' @export
 neiGWAS.cov = function(geno, g_nei, pheno, X0=matrix(1,nrow=length(pheno)), asym=FALSE, n_core=1L, ...){
   if((min(geno)==-1)&(max(geno)==1)){

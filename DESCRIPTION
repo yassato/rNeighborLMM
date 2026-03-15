@@ -16,6 +16,7 @@ VignetteBuilder: knitr
 Imports:
     gaston,
     parallel,
-    Matrix,
     stats,
-    RAINBOWR
+    RAINBOWR,
+    ggplot2,
+    grDevices
