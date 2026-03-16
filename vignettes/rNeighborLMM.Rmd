@@ -23,12 +23,13 @@ knitr::opts_chunk$set(
 <p>First of all, let us load the rNeighborLMM package.</p>
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 require(rNeighborLMM)
+require(rNeighborGWAS)
 ```
 
 <p>Please install the rNeighborLMM package if not installed. Note that this package is not available at CRAN.</p>
 ```{r message = FALSE, warning = FALSE, echo = TRUE, eval=FALSE}
-devtools::install_github("yassato/rNeighborLMM", repo="master", build_vignettes=TRUE) # if not installed
-install.packages("rNeighborGWAS") # if not installed
+devtools::install_github("yassato/rNeighborLMM", repo="master", build_vignettes=TRUE) 
+install.packages("rNeighborGWAS")
 ```
 
 ### 2. Input data
@@ -69,13 +70,13 @@ g_nei2 <- try(nei.coval(geno=g2, smap=smap, scale=sqrt(2),grouping=grouping))
 
 <p>To see how it works, let us simulate a phenotype from the example genotype data. Here we use the `nei_simu` function of `rNeighborGWAS` package, which does not simulate covariance between IGE and DGE.</p>
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-pheno <- rNeighborGWAS::nei_simu(geno=g, smap=smap, 
-                                 scale=sqrt(2), # true range of neighbor interactions
-                                 grouping=grouping, 
-                                 n_causal=5, # no. of causative SNPs
-                                 pveB=0.4, # true PVE by oligogenic effects
-                                 pve=0.7 # true PVE by polygenic effects
-                                 )
+pheno <- nei_simu(geno=g, smap=smap, 
+                  scale=sqrt(2), # true range of neighbor interactions
+                  grouping=grouping, 
+                  n_causal=5, # no. of causative SNPs
+                  pveB=0.4, # true PVE by oligogenic effects
+                  pve=0.7 # true PVE by polygenic effects
+                  )
 ```
 
 ### 3. Solving multi-kernel mixed models

@@ -19,4 +19,5 @@ Imports:
     stats,
     RAINBOWR,
     ggplot2,
-    grDevices
+    grDevices,
+    rNeighborGWAS
