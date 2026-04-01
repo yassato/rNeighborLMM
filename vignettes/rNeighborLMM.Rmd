@@ -28,7 +28,7 @@ require(rNeighborGWAS)
 
 <p>Please install the rNeighborLMM package if not installed. Note that this package is not available at CRAN.</p>
 ```{r message = FALSE, warning = FALSE, echo = TRUE, eval=FALSE}
-devtools::install_github("yassato/rNeighborLMM", repo="master", build_vignettes=TRUE) 
+devtools::install_github("yassato/rNeighborLMM", build_vignettes=TRUE) 
 install.packages("rNeighborGWAS")
 ```
 
